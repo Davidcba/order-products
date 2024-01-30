@@ -6,18 +6,20 @@ import {
   UseInterceptors,
   UploadedFile,
   Param,
-  InternalServerErrorException,
-} from '@nestjs/common';
+  InternalServerErrorException, UseGuards
+} from "@nestjs/common";
 import { Express } from 'express';
 import { ProductsService } from './product.service';
 import { Product } from './product.model';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async getProducts(): Promise<Product[]> {
     try {
       return await this.productsService.getProducts();
@@ -27,6 +29,7 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getProduct(
     @Param('id') id: string,
   ): Promise<{ product: Product; image: Buffer }> {
@@ -44,6 +47,7 @@ export class ProductsController {
 
   @UseInterceptors(FileInterceptor('file'))
   @Post('file')
+  @UseGuards(JwtAuthGuard)
   async uploadFile(
     @Body() body: Product,
     @UploadedFile() file: Express.Multer.File,

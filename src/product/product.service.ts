@@ -1,12 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { Model } from 'mongoose';
-import { GridFSBucket } from 'mongodb';
-import { InjectModel } from '@nestjs/mongoose';
-import { Product } from './product.model';
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { Model, Types } from "mongoose";
+import { GridFSBucket } from "mongodb";
+import { InjectModel } from "@nestjs/mongoose";
+import { Product } from "./product.model";
 
 @Injectable()
 export class ProductsService {
@@ -60,7 +56,43 @@ export class ProductsService {
       throw new InternalServerErrorException('Failed to fetch products');
     }
   }
-
+  async getTotalPrice(productIds: Types.ObjectId[] | string[]) {
+    const idCount = {};
+    const resultPrices = {};
+    if (Array.isArray(productIds)) {
+      productIds = productIds.map((id) => {
+        return typeof id === 'string' ? new Types.ObjectId(id) : id;
+      });
+    } else {
+      throw new Error('Invalid productIds');
+    }
+    // Count how many items inside the id array.
+    productIds.forEach((id) => {
+      idCount[id._id] = (idCount[id._id] || 0) + 1;
+    });
+    console.log(idCount);
+    try {
+      // Find all products by their IDs
+      const products = await this.productModel.find({
+        _id: { $in: productIds },
+      });
+      // Count the price of each different item
+      products.forEach((product) => {
+        resultPrices[product._id] = product.price;
+      });
+      //Here I validate the total of each type of product.
+      const totalPricePerProduct = Object.keys(idCount).map((id) => ({
+        name: id,
+        sumValue: idCount[id] * resultPrices[id],
+      }));
+      // And as last step I calculate the total price product
+      return totalPricePerProduct.reduce((acc, obj) => acc + obj.sumValue, 0);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error while fetching total order price',
+      );
+    }
+  }
   async getProductWithImageByFilename(
     productId: string,
     filename: string,

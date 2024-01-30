@@ -7,15 +7,21 @@ import { AuthModule } from './auth/auth.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as dotenv from 'dotenv';
 import * as process from 'process';
+import { JwtModule } from '@nestjs/jwt';
+import { UserModule } from './users/user.module';
 
 dotenv.config();
-console.log(process.env.MONGO_URI);
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forRoot(process.env.MONGO_URI, {}),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET, // Replace with your actual secret key
+      signOptions: { expiresIn: '1h' }, // Define token expiration time
+    }),
     ProductsModule,
     OrdersModule,
-    AuthModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Document } from 'mongoose';
 
-@Module({})
-export class AuthModel {}
+export interface User extends Document {
+  username: string;
+  password: string;
+}

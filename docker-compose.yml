@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  nest:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/kenility
+      - JWT_SECRET=ChallengeSucceed
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    ports:
+      - '27017:27017'

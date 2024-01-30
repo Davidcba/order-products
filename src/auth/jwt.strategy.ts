@@ -1,21 +1,23 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, ExtractJwt } from 'passport-jwt';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from './auth.service';
-
+import * as dotenv from 'dotenv';
+import * as process from 'process';
+dotenv.config();
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly authService: AuthService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: 'your-secret-key', // Replace with your secret key
+      secretOrKey: process.env.JWT_SECRET, // Use your own secret key here
     });
   }
 
   async validate(payload: any) {
-    // You can add additional validation logic here based on the payload
-    // For example, check if the user exists in the database, roles, etc.
-    const user = await this.authService.validateUser(payload);
+    // Here, the payload contains decoded token data, not username and password
+    const { sub } = payload; // Extract user information from the payload
+    const user = await this.authService.validateUserById(sub); // Assuming you have a method to validate user by ID
     if (!user) {
       throw new UnauthorizedException();
     }
